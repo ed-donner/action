@@ -23,11 +23,26 @@ trader_mcp_server_params = [
     market_mcp
 ]
 
+# Create a new database for the researcher if it doesn't exist
+
+def create_researcher_db(name):
+    import sqlite3
+    os.makedirs("memory", exist_ok=True)
+    db_filename = f"memory/{name}.db"
+    sqlite3.connect(db_filename).close()
+    print(f"Created database at {db_filename}")
+
+
 # The full set of MCP servers for the researcher: Fetch, Brave Search and Memory
 
 def researcher_mcp_server_params(name: str):
+    db_path = f"file:./memory/{name}.db"
+    if ~os.path.isfile(f"file:./memory/{name}.db"):
+        create_researcher_db(name)
+
+
     return [
         {"command": "uvx", "args": ["mcp-server-fetch"]},
         {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-brave-search"], "env": brave_env},
-        {"command": "npx", "args": ["-y", "mcp-memory-libsql"], "env": {"LIBSQL_URL": f"file:./memory/{name}.db"}}
+        {"command": "npx", "args": ["-y", "mcp-memory-libsql"], "env": {"LIBSQL_URL": db_path}}
     ]
